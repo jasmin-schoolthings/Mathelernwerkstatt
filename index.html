@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rechenwerkstatt</title>
+<style>
+:root{
+  --bg:#fff6e5;--card:#fff;--ink:#2b2d42;--muted:#666b82;
+  --primary:#5b5bd6;--primary-dark:#3f3fa8;
+  --good:#1a8f4e;--good-bg:#dcf5e6;--bad:#d03a3a;--bad-bg:#fde3e3;
+  --accent:#f4a100;--sol-bg:#fff0c2;--line:#dcdcec;
+  --add:#ff7b54;--sub:#2f9bd0;--mul:#46b46a;--div:#a766e8;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;color:var(--ink);font-size:18px;line-height:1.4;
+  font-family:ui-rounded,"Trebuchet MS","Segoe UI",system-ui,-apple-system,sans-serif;
+  background:radial-gradient(circle at 8% 0%,#ffe4ef 0,transparent 38%),radial-gradient(circle at 100% 8%,#e1efff 0,transparent 38%),var(--bg)}
+.wrap{max-width:720px;margin:0 auto;padding:16px 14px 48px}
+h1{font-size:2.1rem;margin:.1em 0}
+h2{font-size:1.3rem;margin:.1em 0 .4em}
+p{margin:.4em 0}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.center{text-align:center}
+.card{background:var(--card);border-radius:22px;padding:18px;margin:14px 0;
+  box-shadow:0 4px 0 rgba(43,45,66,.06),0 10px 28px rgba(43,45,66,.09)}
+.hero{text-align:center;padding:10px 0 0}
+.hero .logo{font-size:3.2rem}
+.foot{text-align:center;color:var(--muted);font-size:.85rem;margin-top:24px}
+
+.btn{font:inherit;font-weight:800;border:0;border-radius:14px;padding:12px 20px;cursor:pointer;
+  background:var(--primary);color:#fff;box-shadow:0 4px 0 var(--primary-dark)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--primary-dark)}
+.btn.sec{background:#fff;color:var(--primary-dark);border:2px solid var(--line);box-shadow:0 3px 0 var(--line)}
+.btn.small{padding:7px 12px;font-size:.9rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+
+.avatars{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin-top:10px}
+.avatar{font:inherit;color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:18px;
+  padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.avatar:hover{border-color:var(--primary);transform:translateY(-2px)}
+.avatar .em{font-size:2.6rem;line-height:1.1}
+.avatar small{color:var(--muted)}
+
+.hud{display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:10px 14px;
+  box-shadow:0 3px 0 rgba(43,45,66,.06),0 6px 18px rgba(43,45,66,.07)}
+.hav{font-size:2.1rem}
+.hmid{flex:1;min-width:0}
+.hmid strong{font-size:.95rem;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:12px;background:#ececf6;border-radius:8px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb703,#ff7b54);border-radius:8px;transition:width .5s}
+.hpts{font-weight:900;font-size:1.15rem;white-space:nowrap}
+.hstreak{font-weight:900;color:#e85d04;white-space:nowrap}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.dots{display:flex;gap:7px}
+.dots span{width:16px;height:16px;border-radius:50%;background:var(--line)}
+.dots .first{background:var(--good)}
+.dots .second{background:var(--accent)}
+.dots .wrong{background:var(--bad)}
+.dots .cur{outline:3px solid var(--primary);outline-offset:2px}
+
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.mode{font:inherit;color:var(--ink);text-align:left;display:flex;gap:12px;align-items:center;cursor:pointer;
+  background:#fff;border:2px solid var(--line);border-left:10px solid var(--mc);border-radius:16px;padding:14px}
+.mode:hover{transform:translateY(-2px);border-color:var(--mc)}
+.mode .ic{font-size:2rem}
+.mode strong{display:block;line-height:1.2}
+.mode small{color:var(--muted)}
+.lvls{display:grid;gap:12px;margin-top:12px}
+.lvl{font:inherit;color:var(--ink);text-align:left;cursor:pointer;background:#fff;border:2px solid var(--line);
+  border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lvl:hover{border-color:var(--primary)}
+.lvl small{color:var(--muted);display:block}
+.lvl .pts{font-weight:900;color:#c77d00;white-space:nowrap}
+
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.badge{border:2px solid var(--line);border-radius:14px;padding:10px 8px;text-align:center;background:#fff}
+.badge .bi{font-size:1.9rem}
+.badge strong{display:block;font-size:.9rem}
+.badge small{color:var(--muted);font-size:.75rem;line-height:1.2;display:block}
+.badge.locked{filter:grayscale(1);opacity:.5}
+
+.task{border-top:10px solid var(--mc)}
+.tag{display:inline-block;background:var(--mc);color:#fff;font-weight:800;border-radius:20px;padding:3px 12px;font-size:.9rem}
+.help{margin:.6em 0 1em}
+.work{text-align:center}
+
+.calc{--cw:clamp(30px,9.5vw,52px);display:inline-block;font-variant-numeric:tabular-nums;text-align:left}
+.crow{display:flex;justify-content:flex-end;align-items:center}
+.opc{width:calc(var(--cw)*.85);text-align:center;font-weight:900;font-size:calc(var(--cw)*.7);color:var(--primary)}
+.cell{width:var(--cw);height:calc(var(--cw)*1.12);display:flex;align-items:center;justify-content:center;
+  font-size:calc(var(--cw)*.78);font-weight:800}
+.cell.g{margin-left:calc(var(--cw)*.3)}
+.rule{height:4px;background:var(--ink);border-radius:2px;margin:4px 0}
+input.box{font:inherit;font-weight:800;text-align:center;color:var(--ink);background:#fff;
+  border:2px solid var(--line);border-radius:10px;padding:0}
+.cell input.box{width:calc(100% - 4px);height:calc(100% - 4px);font-size:calc(var(--cw)*.68)}
+.cell input.carry{height:68%;width:74%;font-size:calc(var(--cw)*.4);border-style:dashed;background:#f7f7ff}
+input.box:focus{border-color:var(--primary);background:#f3f3ff}
+input.box.ok{border-color:var(--good);background:var(--good-bg)}
+input.box.bad{border-color:var(--bad);background:var(--bad-bg)}
+input.box.sol{border-color:var(--accent);background:var(--sol-bg)}
+input.box:disabled{color:var(--ink);-webkit-text-fill-color:var(--ink)}
+
+.bigeq{font-size:2.3rem;font-weight:900;margin:4px 0 2px}
+.decomp{color:var(--muted);margin-bottom:12px}
+.eq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:12px 0;font-size:1.5rem;font-weight:800}
+.eq.final{border-top:3px dashed var(--line);padding-top:16px;margin-top:18px}
+.eq input.box{font-size:1.5rem;padding:8px 6px}
+
+.hint{background:#fff8dc;border:2px solid #ffe08a;border-radius:14px;padding:10px 14px;margin-top:14px;text-align:left}
+.fb{min-height:1.6em;margin-top:12px;font-weight:800;text-align:center}
+.fb.good{color:var(--good)}.fb.bad{color:var(--bad)}.fb.warn{color:#b26a00}
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+
+.stars{font-size:3rem;letter-spacing:4px}
+.sumlist{display:flex;gap:8px;justify-content:center;font-size:1.6rem;margin:10px 0}
+.bigpts{font-size:2.2rem;font-weight:900;color:#c77d00}
+
+#toasts{position:fixed;top:12px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:60}
+.toast{background:var(--ink);color:#fff;font-weight:800;padding:10px 18px;border-radius:30px;box-shadow:0 6px 20px rgba(0,0,0,.25);
+  animation:pop .35s ease-out;max-width:92vw;text-align:center}
+@keyframes pop{from{transform:translateY(-14px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.confetti{position:fixed;top:-30px;pointer-events:none;z-index:50;animation:fall 1.9s ease-in forwards}
+@keyframes fall{to{transform:translateY(112vh) rotate(420deg)}}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}.toast{animation:none}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<div id="toasts" aria-live="polite"></div>
+<noscript><p style="padding:20px">Bitte aktiviere JavaScript, damit die Rechenwerkstatt funktioniert.</p></noscript>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= Grunddaten ================= */
+var app=document.getElementById('app');
+var toasts=document.getElementById('toasts');
+
+var AVATARS=[
+  {id:'fuchs',emoji:'🦊',name:'Fuchs'},{id:'eule',emoji:'🦉',name:'Eule'},
+  {id:'panda',emoji:'🐼',name:'Panda'},{id:'loewe',emoji:'🦁',name:'Löwe'},
+  {id:'frosch',emoji:'🐸',name:'Frosch'},{id:'einhorn',emoji:'🦄',name:'Einhorn'}
+];
+var MODES={
+  add:{name:'Schriftlich addieren',icon:'➕',color:'var(--add)',
+    help:'Rechne Spalte für Spalte von rechts nach links. In die kleinen Kästchen darfst du Überträge schreiben.'},
+  sub:{name:'Schriftlich subtrahieren',icon:'➖',color:'var(--sub)',
+    help:'Rechne Spalte für Spalte von rechts nach links. In die kleinen Kästchen darfst du Merkzahlen schreiben.'},
+  mul:{name:'Halbschriftlich multiplizieren',icon:'✖️',color:'var(--mul)',
+    help:'Zerlege die Aufgabe in leichte Teilaufgaben. Rechne jede aus und zähle die Ergebnisse dann zusammen.'},
+  div:{name:'Halbschriftlich dividieren',icon:'➗',color:'var(--div)',
+    help:'Zerlege die Zahl in leichte Teile. Rechne jede Teilaufgabe aus und zähle die Ergebnisse dann zusammen.'}
+};
+var LEVELS={leicht:{name:'Starter',stars:'⭐'},mittel:{name:'Profi',stars:'⭐⭐'},schwer:{name:'Meister',stars:'⭐⭐⭐'}};
+var LEVEL_DESC={
+  add:{leicht:'Zahlen bis 1000',mittel:'Zahlen bis 10 000',schwer:'drei Zahlen, bis 1 Million'},
+  sub:{leicht:'Zahlen bis 1000',mittel:'Zahlen bis 10 000',schwer:'Zahlen bis 1 Million'},
+  mul:{leicht:'zweistellig · einstellig',mittel:'dreistellig · einstellig',schwer:'zweistellig · zweistellig'},
+  div:{leicht:'ohne Rest, kleine Zahlen',mittel:'ohne Rest, größere Zahlen',schwer:'mit Rest'}
+};
+var BASE={leicht:10,mittel:15,schwer:20};
+var PLACES=['Einer','Zehner','Hunderter','Tausender','Zehntausender','Hunderttausender','Millionen'];
+var LEVEL_TITLES=['Rechen-Küken','Zahlen-Entdecker','Knobel-Profi','Rechen-Ass','Mathe-Meister','Zahlen-Zauberer','Rechen-Legende'];
+var PRAISE=['Super!','Genau richtig!','Klasse gerechnet!','Stark!','Perfekt!','Toll gemacht!'];
+var BADGES=[
+  {id:'first',icon:'🌱',name:'Erster Schritt',desc:'Löse deine erste Aufgabe.',test:function(p){return p.solved>=1;}},
+  {id:'solved25',icon:'🚀',name:'Durchstarter',desc:'25 Aufgaben gelöst.',test:function(p){return p.solved>=25;}},
+  {id:'streak5',icon:'🔥',name:'Heißer Lauf',desc:'5 in Folge gleich richtig.',test:function(p){return p.bestStreak>=5;}},
+  {id:'streak10',icon:'⚡',name:'Blitzserie',desc:'10 in Folge gleich richtig.',test:function(p){return p.bestStreak>=10;}},
+  {id:'p100',icon:'💯',name:'Hundert Punkte',desc:'100 Punkte gesammelt.',test:function(p){return p.points>=100;}},
+  {id:'p500',icon:'🏆',name:'Punktejäger',desc:'500 Punkte gesammelt.',test:function(p){return p.points>=500;}},
+  {id:'all4',icon:'🎯',name:'Alleskönner',desc:'Jede Rechenart schon geübt.',test:function(p){return p.modes.add>0&&p.modes.sub>0&&p.modes.mul>0&&p.modes.div>0;}},
+  {id:'hard10',icon:'👑',name:'Meister-Rechner',desc:'10 schwere Aufgaben gelöst.',test:function(p){return p.hard>=10;}}
+];
+
+/* ================= Speicher (nur auf diesem Gerät) ================= */
+var KEY='rechenwerkstatt-v1';
+var mem=null;
+function loadDB(){
+  try{var raw=localStorage.getItem(KEY);if(raw)return JSON.parse(raw);}catch(e){}
+  return mem||{profiles:{}};
+}
+var DB=loadDB();
+if(!DB.profiles)DB.profiles={};
+function saveDB(){mem=DB;try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+if(!DB.lessonStart){DB.lessonStart=Date.now();saveDB();}
+function lessonLabel(){
+  try{return new Date(DB.lessonStart).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',','')+' Uhr';}
+  catch(e){return '';}
+}
+function newLesson(){DB.profiles={};DB.lessonStart=Date.now();saveDB();}
+function prof(id){
+  var base={points:0,solved:0,streak:0,bestStreak:0,hard:0,rounds:0,modes:{},badges:[]};
+  var p=DB.profiles[id]||{};
+  for(var k in base){if(p[k]===undefined)p[k]=base[k];}
+  ['add','sub','mul','div'].forEach(function(m){if(!p.modes[m])p.modes[m]=0;});
+  DB.profiles[id]=p;
+  return p;
+}
+function levelInfo(points){
+  var l=Math.floor(points/100);
+  return {lvl:l+1,title:LEVEL_TITLES[Math.min(l,LEVEL_TITLES.length-1)],into:points%100};
+}
+
+/* ================= Hilfsfunktionen ================= */
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(a){return a[rnd(0,a.length-1)];}
+function fmt(n){return n>=10000?String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f'):String(n);}
+function digitAt(n,k){var s=String(n);return k<s.length?Number(s[s.length-1-k]):null;}
+function parts(x){
+  var s=String(x),out=[];
+  for(var i=0;i<s.length;i++){
+    var d=Number(s[i]);
+    if(d>0){var place=Math.pow(10,s.length-1-i);out.push({digit:d,place:place,value:d*place});}
+  }
+  return out;
+}
+function zeros(p){return p===10?'eine Null':p===100?'zwei Nullen':'drei Nullen';}
+
+/* ================= Spaltenrechnen ================= */
+function addCols(nums,n){
+  var cols=[],cin=0;
+  for(var k=0;k<n;k++){
+    var ds=nums.map(function(x){return digitAt(x,k);}).filter(function(d){return d!==null;});
+    var sum=ds.reduce(function(a,b){return a+b;},0)+cin;
+    var cout=Math.floor(sum/10);
+    cols.push({ds:ds,cin:cin,sum:sum,digit:sum%10,cout:cout});
+    cin=cout;
+  }
+  return cols;
+}
+function subCols(a,b,n){
+  var cols=[],cin=0;
+  for(var k=0;k<n;k++){
+    var top=digitAt(a,k);if(top===null)top=0;
+    var s=digitAt(b,k);if(s===null)s=0;
+    var t=s+cin,r,cout;
+    if(top<t){r=top+10-t;cout=1;}else{r=top-t;cout=0;}
+    cols.push({top:top,s:s,cin:cin,t:t,r:r,digit:r,cout:cout});
+    cin=cout;
+  }
+  return cols;
+}
+
+/* ================= Aufgaben erzeugen ================= */
+function genAdd(level){
+  var cfg={leicht:{count:2,lo:100,hi:899,max:999,minC:1},
+           mittel:{count:2,lo:1000,hi:8999,max:9999,minC:2},
+           schwer:{count:3,lo:10000,hi:299999,max:999999,minC:3}}[level];
+  var nums,sum,n;
+  for(var t=0;t<400;t++){
+    nums=[];for(var i=0;i<cfg.count;i++)nums.push(rnd(cfg.lo,cfg.hi));
+    sum=nums.reduce(function(a,b){return a+b;},0);
+    if(sum>cfg.max&&t<399)continue;
+    n=Math.max.apply(null,nums.map(function(x){return String(x).length;}))+1;
+    var c=addCols(nums,n).filter(function(x){return x.cout>0;}).length;
+    if(c>=cfg.minC||t>=399)break;
+  }
+  return {mode:'add',level:level,kind:'column',op:'+',nums:nums,n:n,answer:sum,
+    title:nums.map(fmt).join(' + ')};
+}
+function genSub(level){
+  var cfg={leicht:{alo:300,ahi:999,blo:20,minB:1},
+           mittel:{alo:2000,ahi:9999,blo:100,minB:2},
+           schwer:{alo:200000,ahi:999999,blo:1000,minB:2}}[level];
+  var a,b,n;
+  for(var t=0;t<400;t++){
+    a=rnd(cfg.alo,cfg.ahi);b=rnd(cfg.blo,a-1);
+    n=String(a).length;
+    var c=subCols(a,b,n).filter(function(x){return x.cout>0;}).length;
+    if(c>=cfg.minB||t>=399)break;
+  }
+  return {mode:'sub',level:level,kind:'column',op:'−',nums:[a,b],n:n,answer:a-b,
+    title:fmt(a)+' − '+fmt(b)};
+}
+function genMul(level){
+  var a,b,steps,decomp;
+  if(level==='schwer'){
+    do{a=rnd(12,99);}while(a%10===0);
+    var t=rnd(1,5),o=rnd(2,9);b=t*10+o;
+    var ao=a%10,at=a-ao;
+    steps=[
+      {label:a+' · '+(t*10),answer:a*t*10,hint:'Rechne erst '+a+' · '+t+' und hänge dann eine Null an.'},
+      {label:a+' · '+o,answer:a*o,hint:'Zerlege die '+a+': '+at+' · '+o+' + '+ao+' · '+o+'.'}
+    ];
+    decomp=b+' = '+(t*10)+' + '+o;
+  }else{
+    if(level==='leicht'){do{a=rnd(12,99);}while(a%10===0);}
+    else{do{a=rnd(101,999);}while(parts(a).length<2);}
+    b=rnd(2,9);
+    var ps=parts(a);
+    steps=ps.map(function(p){
+      return {label:fmt(p.value)+' · '+b,answer:p.value*b,
+        hint:p.place>1?'Rechne '+p.digit+' · '+b+' und hänge '+zeros(p.place)+' an.'
+                      :'Kleines Einmaleins: '+p.digit+' · '+b+'.'};
+    });
+    decomp=fmt(a)+' = '+ps.map(function(p){return fmt(p.value);}).join(' + ');
+  }
+  var total=a*b;
+  return {mode:'mul',level:level,kind:'steps',title:fmt(a)+' · '+b,decomp:decomp,steps:steps,
+    final:{answer:total,hint:'Zähle deine Teilergebnisse zusammen: '+steps.map(function(s){return s.answer;}).join(' + ')+'.'}};
+}
+function genDiv(level){
+  var d,q,r=0;
+  if(level==='leicht'){d=rnd(2,8);do{q=rnd(12,99);}while(q%10===0);}
+  else if(level==='mittel'){d=rnd(3,9);do{q=rnd(110,899);}while(parts(q).length<2);}
+  else{d=rnd(3,9);do{q=rnd(12,299);}while(q%10===0);r=rnd(1,d-1);}
+  var dividend=d*q+r;
+  var steps=parts(q).map(function(p){
+    var ones=p.place===1;
+    var part=d*p.value+(ones?r:0);
+    var rest=(ones&&r>0)?r:undefined;
+    var hint;
+    if(p.place>1)hint='Rechne '+(d*p.digit)+' : '+d+' = '+p.digit+' und hänge '+zeros(p.place)+' an.';
+    else if(rest!==undefined)hint='Wie oft passt die '+d+' in '+part+'? Was bleibt übrig? Das ist der Rest.';
+    else hint='Welche Zahl mal '+d+' ergibt '+part+'?';
+    return {part:part,label:fmt(part)+' : '+d,answer:p.value,rest:rest,hint:hint};
+  });
+  var fin={answer:q,hint:'Zähle deine Teilergebnisse zusammen: '+steps.map(function(s){return s.answer;}).join(' + ')+'.'};
+  if(r>0){fin.rest=r;fin.hint+=' Den Rest schreibst du extra auf.';}
+  return {mode:'div',level:level,kind:'steps',title:fmt(dividend)+' : '+d,
+    decomp:fmt(dividend)+' = '+steps.map(function(s){return fmt(s.part);}).join(' + '),steps:steps,final:fin};
+}
+var GEN={add:genAdd,sub:genSub,mul:genMul,div:genDiv};
+
+function expectMap(t){
+  var m={};
+  t.steps.forEach(function(s,i){m['s'+i]=s.answer;if(s.rest!==undefined)m['s'+i+'r']=s.rest;});
+  m.f=t.final.answer;if(t.final.rest!==undefined)m.fr=t.final.rest;
+  return m;
+}
+
+/* ================= Zustand ================= */
+var S={avatar:null,mode:null,level:null,idx:0,total:5,task:null,attempts:0,hintUsed:false,
+  done:false,results:[],roundPoints:0,used:{}};
+
+/* ================= Anzeige: Startseite ================= */
+function renderProfiles(){
+  S.avatar=null;
+  app.innerHTML=
+    '<header class="hero"><div class="logo">🧮</div><h1>Rechenwerkstatt</h1>'+
+    '<p class="muted">Schriftlich und halbschriftlich rechnen – sammle Punkte und werde zum Rechen-Meister!</p></header>'+
+    '<section class="card"><h2>Wer rechnet heute?</h2>'+
+    '<p class="muted small">Wähle dein Tier. Dein Spielstand wird nur auf diesem Gerät gespeichert.</p>'+
+    '<div class="avatars">'+AVATARS.map(function(a){
+      var p=prof(a.id),L=levelInfo(p.points);
+      return '<button class="avatar" data-action="pick-avatar" data-id="'+a.id+'"><span class="em">'+a.emoji+'</span>'+
+        '<strong>'+a.name+'</strong><small>Level '+L.lvl+' · '+p.points+' Punkte</small></button>';
+    }).join('')+'</div></section>'+
+    '<section class="card center"><p class="muted small">Diese Stunde läuft seit '+lessonLabel()+'.</p>'+
+    '<button class="btn sec small" data-action="new-lesson">🔄 Für Lehrkräfte: Neue Stunde starten</button></section>'+
+    '<p class="foot">Keine Anmeldung, keine Namen, keine Daten im Internet – alles bleibt in diesem Browser.</p>';
+}
+
+function hudHTML(){
+  var p=prof(S.avatar),L=levelInfo(p.points),av=AVATARS.filter(function(a){return a.id===S.avatar;})[0];
+  return '<div class="hud"><span class="hav">'+av.emoji+'</span><div class="hmid"><strong>Level '+L.lvl+' · '+L.title+
+    '</strong><div class="bar" title="'+L.into+' von 100 Punkten bis zum nächsten Level"><i style="width:'+L.into+'%"></i></div></div>'+
+    '<div class="hpts">⭐ '+p.points+'<small class="muted" style="display:block;font-size:.65rem;font-weight:700">Punkte heute</small></div>'+(p.streak>=2?'<div class="hstreak">🔥 '+p.streak+'</div>':'')+'</div>';
+}
+
+/* ================= Anzeige: Menü ================= */
+function renderMenu(){
+  var p=prof(S.avatar);
+  var h='<div class="topbar"><button class="btn sec small" data-action="home">← Tier wechseln</button></div>'+
+    '<div id="hud">'+hudHTML()+'</div>'+
+    '<section class="card"><h2>Was möchtest du üben?</h2><div class="modes">'+
+    ['add','sub','mul','div'].map(function(m){
+      var M=MODES[m];
+      return '<button class="mode" style="--mc:'+M.color+'" data-action="pick-mode" data-mode="'+m+'">'+
+        '<span class="ic">'+M.icon+'</span><span><strong>'+M.name+'</strong><small>'+p.modes[m]+' richtig gelöst</small></span></button>';
+    }).join('')+'</div></section>'+
+    '<section class="card"><h2>Meine Abzeichen</h2><div class="badges">'+
+    BADGES.map(function(b){
+      var got=p.badges.indexOf(b.id)>=0;
+      return '<div class="badge'+(got?'':' locked')+'"><div class="bi">'+b.icon+'</div><strong>'+b.name+'</strong><small>'+b.desc+'</small></div>';
+    }).join('')+'</div></section>'+
+    '<p class="center"><button class="btn sec small" data-action="reset">Meinen Spielstand löschen</button></p>';
+  app.innerHTML=h;
+}
+function renderLevels(mode){
+  S.mode=mode;var M=MODES[mode];
+  app.innerHTML=
+    '<div class="topbar"><button class="btn sec small" data-action="back-menu">← Zurück</button></div>'+
+    '<section class="card" style="--mc:'+M.color+'"><h2>'+M.icon+' '+M.name+'</h2>'+
+    '<p class="muted">Wie schwer soll es sein? Eine Runde hat 5 Aufgaben.</p><div class="lvls">'+
+    ['leicht','mittel','schwer'].map(function(l){
+      return '<button class="lvl" data-action="start" data-level="'+l+'"><span><strong>'+LEVELS[l].stars+' '+LEVELS[l].name+'</strong>'+
+        '<small>'+LEVEL_DESC[mode][l]+'</small></span><span class="pts">bis zu '+(BASE[l]+10)+' Punkte</span></button>';
+    }).join('')+'</div></section>';
+}
+
+/* ================= Anzeige: Aufgabe ================= */
+function dotsHTML(){
+  var h='';
+  for(var i=0;i<S.total;i++){
+    var r=S.results[i];
+    h+='<span class="'+(r?r.state:(i===S.idx?'cur':''))+'"></span>';
+  }
+  return h;
+}
+function inp(key,len){
+  return '<input class="box ans" data-k="'+key+'" inputmode="numeric" autocomplete="off" maxlength="'+(len+2)+
+    '" style="width:calc('+(len+1.4)+'ch + 22px)" aria-label="Ergebnis">';
+}
+function columnHTML(t){
+  var n=t.n;
+  function g(p){return(p>0&&(n-1-p)%3===2)?' g':'';}
+  function numRow(num,op){
+    var s=String(num),h='<div class="crow"><span class="opc">'+(op||'')+'</span>';
+    for(var p=0;p<n;p++){var k=n-1-p;h+='<span class="cell dig'+g(p)+'">'+(k<s.length?s[s.length-1-k]:'')+'</span>';}
+    return h+'</div>';
+  }
+  var h='<div class="calc" role="group" aria-label="Rechnung '+t.title+'">';
+  t.nums.forEach(function(x,i){h+=numRow(x,i===t.nums.length-1?t.op:'');});
+  h+='<div class="rule"></div><div class="crow"><span class="opc"></span>';
+  for(var p=0;p<n;p++){
+    h+=p<n-1?'<span class="cell'+g(p)+'"><input class="box carry" data-p="'+p+'" maxlength="1" inputmode="numeric" autocomplete="off" aria-label="'+(t.mode==='add'?'Übertrag':'Merkzahl')+'"></span>'
+             :'<span class="cell"></span>';
+  }
+  h+='</div><div class="crow"><span class="opc"></span>';
+  for(var q=0;q<n;q++){
+    h+='<span class="cell'+g(q)+'"><input class="box res" data-p="'+q+'" maxlength="1" inputmode="numeric" autocomplete="off" aria-label="Ergebnis '+PLACES[n-1-q]+'"></span>';
+  }
+  h+='</div></div><p class="small muted">Die kleinen Kästchen sind für '+(t.mode==='add'?'Überträge':'Merkzahlen')+' (freiwillig).</p>';
+  return h;
+}
+function stepsHTML(t){
+  var h='<div class="bigeq">'+t.title+'</div><div class="decomp">Zerlegen: '+t.decomp+'</div>';
+  t.steps.forEach(function(s,i){
+    h+='<div class="eq"><span>'+s.label+' =</span>'+inp('s'+i,String(s.answer).length)+
+      (s.rest!==undefined?'<span>Rest</span>'+inp('s'+i+'r',String(s.rest).length):'')+'</div>';
+  });
+  h+='<div class="eq final"><span>Ergebnis =</span>'+inp('f',String(t.final.answer).length)+
+    (t.final.rest!==undefined?'<span>Rest</span>'+inp('fr',String(t.final.rest).length):'')+'</div>';
+  return h;
+}
+function renderTask(){
+  var t=S.task,M=MODES[t.mode];
+  S.attempts=0;S.hintUsed=false;S.done=false;
+  app.innerHTML=
+    '<div class="topbar"><button class="btn sec small" data-action="quit">✕ Beenden</button><div class="dots" id="dots">'+dotsHTML()+'</div></div>'+
+    '<div id="hud">'+hudHTML()+'</div>'+
+    '<section class="card task" style="--mc:'+M.color+'">'+
+    '<span class="tag">'+M.icon+' '+M.name+' · '+LEVELS[t.level].stars+'</span>'+
+    '<p class="muted help">'+M.help+'</p>'+
+    '<div class="work">'+(t.kind==='column'?columnHTML(t):stepsHTML(t))+'</div>'+
+    '<div id="hint" class="hint" hidden></div><div id="fb" class="fb" role="status" aria-live="polite"></div>'+
+    '<div class="actions"><button class="btn sec" id="hintbtn" data-action="hint">💡 Tipp</button>'+
+    '<button class="btn" id="primary" data-action="check">Prüfen ✓</button></div>'+
+    '<p class="small muted center">Aufgabe '+(S.idx+1)+' von '+S.total+' · Mit Tipp oder zweitem Versuch gibt es nur halbe Punkte.</p></section>';
+  var first=t.kind==='column'?app.querySelector('.res[data-p="'+(t.n-1)+'"]'):app.querySelector('.ans');
+  if(first)setTimeout(function(){first.focus();},40);
+}
+
+/* ================= Prüfen ================= */
+function setFb(msg,cls){var f=document.getElementById('fb');if(f){f.textContent=msg;f.className='fb '+(cls||'');}}
+function expDigit(t,p){var e=String(t.answer),k=t.n-1-p;return k<e.length?e[e.length-1-k]:'';}
+function colGood(t,p,v){var e=expDigit(t,p);return v===e||(e===''&&(v===''||v==='0'));}
+
+function checkColumn(t){
+  var els=[].slice.call(app.querySelectorAll('.res'));
+  var vals=els.map(function(e){return e.value.trim();});
+  var s=vals.map(function(v){return v===''?' ':v;}).join('').trim();
+  if(s===''||s.indexOf(' ')>=0)return {incomplete:true,msg:'Es fehlen noch Ziffern. Fülle alle Kästchen bis zum Einer aus.'};
+  var ok=Number(s)===t.answer;
+  els.forEach(function(e,p){
+    var good=ok||colGood(t,p,vals[p]);
+    e.classList.toggle('ok',good&&vals[p]!=='');e.classList.toggle('bad',!good);
+  });
+  return {ok:ok};
+}
+function checkSteps(t){
+  var exp=expectMap(t),els=[].slice.call(app.querySelectorAll('.ans'));
+  if(els.some(function(e){return e.value.trim()==='';}))return {incomplete:true,msg:'Fülle zuerst alle Felder aus.'};
+  var ok=true;
+  els.forEach(function(e){
+    var good=Number(e.value)===exp[e.dataset.k];
+    if(!good)ok=false;
+    e.classList.toggle('ok',good);e.classList.toggle('bad',!good);
+  });
+  return {ok:ok};
+}
+function reveal(t){
+  if(t.kind==='column'){
+    [].forEach.call(app.querySelectorAll('.res'),function(e){
+      e.value=expDigit(t,Number(e.dataset.p));e.classList.remove('ok','bad');e.classList.add('sol');
+    });
+  }else{
+    var exp=expectMap(t);
+    [].forEach.call(app.querySelectorAll('.ans'),function(e){
+      e.value=exp[e.dataset.k];e.classList.remove('ok','bad');e.classList.add('sol');
+    });
+  }
+}
+
+/* ================= Tipp ================= */
+function hintText(t){
+  if(t.kind==='column'){
+    var els=[].slice.call(app.querySelectorAll('.res'));
+    for(var k=0;k<t.n;k++){
+      var p=t.n-1-k,v=els[p].value.trim();
+      if(colGood(t,p,v)&&!(v===''&&expDigit(t,p)!==''))continue;
+      if(t.mode==='add'){
+        var c=addCols(t.nums,t.n)[k];
+        return 'In der '+PLACES[k]+'-Spalte: '+(c.ds.length?c.ds.join(' + '):'')+(c.cin?(c.ds.length?' + ':'')+c.cin+' (Übertrag)':'')+
+          ' = '+c.sum+'. Schreibe '+c.digit+' hin'+(c.cout?' und merke dir '+c.cout+' für die nächste Spalte.':'.');
+      }
+      var d=subCols(t.nums[0],t.nums[1],t.n)[k];
+      var sub=d.top+' − '+d.t+(d.cin?' ('+d.s+' + '+d.cin+' Merkzahl)':'');
+      if(d.top<d.t)return 'In der '+PLACES[k]+'-Spalte: '+sub+' geht nicht. Nimm 10 dazu: '+(d.top+10)+' − '+d.t+' = '+d.r+
+        '. Schreibe '+d.r+' hin und merke dir 1 für die nächste Spalte.';
+      return 'In der '+PLACES[k]+'-Spalte: '+sub+' = '+d.r+'. Schreibe '+d.r+' hin.';
+    }
+    return 'Alle Ziffern stimmen schon – drücke auf „Prüfen“.';
+  }
+  var exp=expectMap(t);
+  for(var i=0;i<t.steps.length;i++){
+    var a=app.querySelector('[data-k="s'+i+'"]'),b=app.querySelector('[data-k="s'+i+'r"]');
+    var wrong=a.value.trim()===''||Number(a.value)!==exp['s'+i]||(b&&(b.value.trim()===''||Number(b.value)!==exp['s'+i+'r']));
+    if(wrong)return t.steps[i].label+': '+t.steps[i].hint;
+  }
+  return t.final.hint;
+}
+
+/* ================= Punkte und Abschluss ================= */
+function toast(msg){
+  var d=document.createElement('div');d.className='toast';d.textContent=msg;toasts.appendChild(d);
+  setTimeout(function(){if(d.parentNode)d.parentNode.removeChild(d);},3800);
+}
+function confetti(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  var E=['⭐','✨','🎉','🌟','💫'];
+  for(var i=0;i<26;i++){
+    var s=document.createElement('span');s.className='confetti';s.textContent=E[i%E.length];
+    s.style.left=(Math.random()*100)+'vw';s.style.animationDelay=(Math.random()*.5)+'s';
+    s.style.fontSize=(18+Math.random()*16)+'px';document.body.appendChild(s);
+    (function(el){setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},2700);})(s);
+  }
+}
+function finish(correct){
+  var t=S.task,p=prof(S.avatar),before=levelInfo(p.points).lvl,pts=0,state;
+  if(correct){
+    if(S.attempts===0&&!S.hintUsed){p.streak++;pts=BASE[t.level]+Math.min(p.streak-1,5)*2;state='first';}
+    else{p.streak=0;pts=Math.floor(BASE[t.level]/2);state='second';}
+    p.solved++;p.modes[t.mode]++;if(t.level==='schwer')p.hard++;
+  }else{p.streak=0;state='wrong';}
+  p.bestStreak=Math.max(p.bestStreak,p.streak);
+  p.points+=pts;S.roundPoints+=pts;S.results.push({state:state,pts:pts});S.done=true;
+
+  var newBadges=BADGES.filter(function(b){return p.badges.indexOf(b.id)<0&&b.test(p);});
+  newBadges.forEach(function(b){p.badges.push(b.id);});
+  saveDB();
+
+  [].forEach.call(app.querySelectorAll('input'),function(e){e.disabled=true;});
+  if(state==='first'){
+    setFb(pick(PRAISE)+' +'+pts+' Punkte'+(p.streak>=2?' · 🔥 Serie: '+p.streak:''),'good');confetti();
+  }else if(state==='second'){
+    setFb('Geschafft! +'+pts+' Punkte (halbe Punkte, weil du einen Tipp oder einen zweiten Versuch gebraucht hast)','good');
+  }else{
+    setFb('Das war knifflig – nicht schlimm! Die richtige Lösung siehst du in Gelb. Beim nächsten Mal klappt es!','warn');
+  }
+  document.getElementById('hud').innerHTML=hudHTML();
+  document.getElementById('dots').innerHTML=dotsHTML();
+  document.getElementById('hintbtn').disabled=true;
+  var pb=document.getElementById('primary');
+  pb.dataset.action='next';pb.textContent=(S.idx+1<S.total)?'Weiter ➜':'Fertig 🎉';
+  setTimeout(function(){pb.focus();},30);
+
+  var after=levelInfo(p.points);
+  if(after.lvl>before){toast('🎉 Level '+after.lvl+': '+after.title+'!');confetti();}
+  newBadges.forEach(function(b){toast(b.icon+' Neues Abzeichen: '+b.name);});
+}
+function onCheck(){
+  if(S.done)return;
+  var t=S.task,r=t.kind==='column'?checkColumn(t):checkSteps(t);
+  if(r.incomplete){setFb(r.msg,'warn');return;}
+  if(r.ok){finish(true);return;}
+  S.attempts++;
+  if(S.attempts>=2){reveal(t);finish(false);}
+  else{
+    setFb('Fast! Die roten Kästchen stimmen noch nicht. Schau noch einmal genau hin – du hast einen zweiten Versuch.','bad');
+    var bad=app.querySelector('input.bad');if(bad)bad.focus();
+  }
+}
+function onHint(){
+  if(S.done)return;
+  S.hintUsed=true;
+  var h=document.getElementById('hint');h.hidden=false;h.textContent='💡 '+hintText(S.task);
+}
+
+/* ================= Runde ================= */
+function makeTask(){
+  var t;
+  for(var i=0;i<30;i++){t=GEN[S.mode](S.level);if(!S.used[t.title])break;}
+  S.used[t.title]=true;return t;
+}
+function startRound(mode,level){
+  S.mode=mode;S.level=level;S.idx=0;S.results=[];S.roundPoints=0;S.used={};
+  S.task=makeTask();renderTask();
+}
+function next(){
+  if(S.idx+1<S.total){S.idx++;S.task=makeTask();renderTask();}
+  else renderSummary();
+}
+function renderSummary(){
+  var p=prof(S.avatar);p.rounds++;saveDB();
+  var f=S.results.filter(function(r){return r.state==='first';}).length;
+  var stars=f>=5?3:(f>=3?2:1);
+  var msg=stars===3?'Fehlerfrei! Du bist ein Rechen-Profi!':stars===2?'Sehr gut gerechnet!':'Gut gemacht – Übung macht den Meister!';
+  var icons={first:'✅',second:'🟡',wrong:'❌'};
+  app.innerHTML=
+    '<div id="hud">'+hudHTML()+'</div>'+
+    '<section class="card center"><h2>Runde geschafft!</h2>'+
+    '<div class="stars" aria-label="'+stars+' von 3 Sternen">'+'⭐'.repeat(stars)+'☆'.repeat(3-stars)+'</div>'+
+    '<p>'+msg+'</p><div class="sumlist">'+S.results.map(function(r){return '<span>'+icons[r.state]+'</span>';}).join('')+'</div>'+
+    '<p class="muted small">✅ gleich richtig · 🟡 mit Tipp oder zweitem Versuch · ❌ noch üben</p>'+
+    '<div class="bigpts">+'+S.roundPoints+' Punkte</div>'+
+    '<div style="background:#fff8dc;border:2px solid #ffe08a;border-radius:16px;padding:12px;margin:14px 0">'+
+    '<div class="muted small">Deine Punkte in dieser Stunde</div><div class="bigpts">'+p.points+'</div>'+
+    '<p class="small">✏️ Schreibe dir diese Zahl am Ende der Stunde auf – sie zählt für das Klassenziel! Du brauchst nur die letzte Zahl.</p></div>'+
+    '<div class="actions"><button class="btn" data-action="start" data-level="'+S.level+'">Nochmal ('+LEVELS[S.level].name+')</button>'+
+    '<button class="btn sec" data-action="back-menu">Anderes Thema</button></div></section>';
+  if(stars>=2)confetti();
+}
+
+/* ================= Ereignisse ================= */
+function focusRes(p){var el=app.querySelector('.res[data-p="'+p+'"]');if(el){el.focus();return true;}return false;}
+app.addEventListener('click',function(e){
+  var b=e.target.closest?e.target.closest('[data-action]'):null;if(!b)return;
+  var a=b.dataset.action;
+  if(a==='pick-avatar'){S.avatar=b.dataset.id;renderMenu();}
+  else if(a==='home')renderProfiles();
+  else if(a==='pick-mode')renderLevels(b.dataset.mode);
+  else if(a==='back-menu')renderMenu();
+  else if(a==='start')startRound(S.mode,b.dataset.level);
+  else if(a==='check')onCheck();
+  else if(a==='hint')onHint();
+  else if(a==='next')next();
+  else if(a==='quit'){if(window.confirm('Runde wirklich beenden?'))renderMenu();}
+  else if(a==='new-lesson'){
+    if(window.confirm('Neue Stunde starten? Alle Punkte, Level und Abzeichen auf diesem iPad werden auf null gesetzt.')){newLesson();renderProfiles();}
+  }
+  else if(a==='reset'){
+    var av=AVATARS.filter(function(x){return x.id===S.avatar;})[0];
+    if(window.confirm('Soll der Spielstand von '+av.name+' wirklich gelöscht werden?')){delete DB.profiles[S.avatar];saveDB();renderMenu();}
+  }
+});
+app.addEventListener('input',function(e){
+  var el=e.target;if(!el.classList||!el.classList.contains('box'))return;
+  el.value=el.value.replace(/\D/g,'');
+  if(el.classList.contains('res')||el.classList.contains('carry'))el.value=el.value.slice(-1);
+  if(el.value==='')return;
+  var p=Number(el.dataset.p);
+  if(el.classList.contains('res'))focusRes(p-1);
+  else if(el.classList.contains('carry'))focusRes(p);
+});
+app.addEventListener('keydown',function(e){
+  var el=e.target;if(!el.classList||!el.classList.contains('box'))return;
+  if(e.key==='Enter'){var pb=document.getElementById('primary');if(pb){e.preventDefault();pb.click();}return;}
+  if(el.classList.contains('res')){
+    var p=Number(el.dataset.p);
+    if(e.key==='ArrowLeft'){e.preventDefault();focusRes(p-1);}
+    else if(e.key==='ArrowRight'){e.preventDefault();focusRes(p+1);}
+    else if(e.key==='Backspace'&&el.value===''){e.preventDefault();focusRes(p+1);}
+  }
+});
+app.addEventListener('focusin',function(e){
+  if(e.target.classList&&e.target.classList.contains('box')&&!e.target.disabled){try{e.target.select();}catch(x){}}
+});
+
+window.__RW={S:S,prof:prof}; /* Test-Hilfe, hat für Kinder keine Funktion */
+renderProfiles();
+})();
+</script>
+</body>
+</html>
