@@ -190,6 +190,12 @@ function loadDB(){
 var DB=loadDB();
 if(!DB.profiles)DB.profiles={};
 function saveDB(){mem=DB;try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}}
+if(!DB.lessonStart){DB.lessonStart=Date.now();saveDB();}
+function lessonLabel(){
+  try{return new Date(DB.lessonStart).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(',','')+' Uhr';}
+  catch(e){return '';}
+}
+function newLesson(){DB.profiles={};DB.lessonStart=Date.now();saveDB();}
 function prof(id){
   var base={points:0,solved:0,streak:0,bestStreak:0,hard:0,rounds:0,modes:{},badges:[]};
   var p=DB.profiles[id]||{};
@@ -348,6 +354,8 @@ function renderProfiles(){
       return '<button class="avatar" data-action="pick-avatar" data-id="'+a.id+'"><span class="em">'+a.emoji+'</span>'+
         '<strong>'+a.name+'</strong><small>Level '+L.lvl+' · '+p.points+' Punkte</small></button>';
     }).join('')+'</div></section>'+
+    '<section class="card center"><p class="muted small">Diese Stunde läuft seit '+lessonLabel()+'.</p>'+
+    '<button class="btn sec small" data-action="new-lesson">🔄 Für Lehrkräfte: Neue Stunde starten</button></section>'+
     '<p class="foot">Keine Anmeldung, keine Namen, keine Daten im Internet – alles bleibt in diesem Browser.</p>';
 }
 
@@ -355,7 +363,7 @@ function hudHTML(){
   var p=prof(S.avatar),L=levelInfo(p.points),av=AVATARS.filter(function(a){return a.id===S.avatar;})[0];
   return '<div class="hud"><span class="hav">'+av.emoji+'</span><div class="hmid"><strong>Level '+L.lvl+' · '+L.title+
     '</strong><div class="bar" title="'+L.into+' von 100 Punkten bis zum nächsten Level"><i style="width:'+L.into+'%"></i></div></div>'+
-    '<div class="hpts">⭐ '+p.points+'</div>'+(p.streak>=2?'<div class="hstreak">🔥 '+p.streak+'</div>':'')+'</div>';
+    '<div class="hpts">⭐ '+p.points+'<small class="muted" style="display:block;font-size:.65rem;font-weight:700">Punkte heute</small></div>'+(p.streak>=2?'<div class="hstreak">🔥 '+p.streak+'</div>':'')+'</div>';
 }
 
 /* ================= Anzeige: Menü ================= */
@@ -615,6 +623,9 @@ function renderSummary(){
     '<p>'+msg+'</p><div class="sumlist">'+S.results.map(function(r){return '<span>'+icons[r.state]+'</span>';}).join('')+'</div>'+
     '<p class="muted small">✅ gleich richtig · 🟡 mit Tipp oder zweitem Versuch · ❌ noch üben</p>'+
     '<div class="bigpts">+'+S.roundPoints+' Punkte</div>'+
+    '<div style="background:#fff8dc;border:2px solid #ffe08a;border-radius:16px;padding:12px;margin:14px 0">'+
+    '<div class="muted small">Deine Punkte in dieser Stunde</div><div class="bigpts">'+p.points+'</div>'+
+    '<p class="small">✏️ Schreibe dir diese Zahl am Ende der Stunde auf – sie zählt für das Klassenziel! Du brauchst nur die letzte Zahl.</p></div>'+
     '<div class="actions"><button class="btn" data-action="start" data-level="'+S.level+'">Nochmal ('+LEVELS[S.level].name+')</button>'+
     '<button class="btn sec" data-action="back-menu">Anderes Thema</button></div></section>';
   if(stars>=2)confetti();
@@ -634,6 +645,9 @@ app.addEventListener('click',function(e){
   else if(a==='hint')onHint();
   else if(a==='next')next();
   else if(a==='quit'){if(window.confirm('Runde wirklich beenden?'))renderMenu();}
+  else if(a==='new-lesson'){
+    if(window.confirm('Neue Stunde starten? Alle Punkte, Level und Abzeichen auf diesem iPad werden auf null gesetzt.')){newLesson();renderProfiles();}
+  }
   else if(a==='reset'){
     var av=AVATARS.filter(function(x){return x.id===S.avatar;})[0];
     if(window.confirm('Soll der Spielstand von '+av.name+' wirklich gelöscht werden?')){delete DB.profiles[S.avatar];saveDB();renderMenu();}
