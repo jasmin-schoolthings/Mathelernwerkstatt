@@ -10,7 +10,7 @@
   --primary:#5b5bd6;--primary-dark:#3f3fa8;
   --good:#1a8f4e;--good-bg:#dcf5e6;--bad:#d03a3a;--bad-bg:#fde3e3;
   --accent:#f4a100;--sol-bg:#fff0c2;--line:#dcdcec;
-  --add:#ff7b54;--sub:#2f9bd0;--mul:#46b46a;--div:#a766e8;
+  --add:#ff7b54;--sub:#2f9bd0;--mul:#46b46a;--div:#a766e8;--rul:#0f8b8d;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -121,6 +121,15 @@ input.box:disabled{color:var(--ink);-webkit-text-fill-color:var(--ink)}
 .sumlist{display:flex;gap:8px;justify-content:center;font-size:1.6rem;margin:10px 0}
 .bigpts{font-size:2.2rem;font-weight:900;color:#c77d00}
 
+.rules{text-align:center}
+.rline{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;font-size:2rem;font-weight:900;margin:10px 0}
+.rline.old{font-size:1.4rem;color:var(--muted);font-weight:700}
+.rline .rnote{font-size:1rem;margin-left:10px;color:var(--good)}
+.rline .rnote.rev{color:#b26a00}
+.selt{background:var(--sol-bg);border-radius:10px;padding:0 6px}
+button.top{font:inherit;font-weight:900;font-size:1.8rem;min-width:54px;height:54px;border-radius:14px;border:3px dashed var(--primary);
+  background:#f3f3ff;color:var(--primary-dark);cursor:pointer}
+button.top:hover{background:#e4e4ff}
 #toasts{position:fixed;top:12px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:60}
 .toast{background:var(--ink);color:#fff;font-weight:800;padding:10px 18px;border-radius:30px;box-shadow:0 6px 20px rgba(0,0,0,.25);
   animation:pop .35s ease-out;max-width:92vw;text-align:center}
@@ -156,14 +165,17 @@ var MODES={
   mul:{name:'Halbschriftlich multiplizieren',icon:'✖️',color:'var(--mul)',
     help:'Zerlege die Aufgabe in leichte Teilaufgaben. Rechne jede aus und zähle die Ergebnisse dann zusammen.'},
   div:{name:'Halbschriftlich dividieren',icon:'➗',color:'var(--div)',
-    help:'Zerlege die Zahl in leichte Teile. Rechne jede Teilaufgabe aus und zähle die Ergebnisse dann zusammen.'}
+    help:'Zerlege die Zahl in leichte Teile. Rechne jede Teilaufgabe aus und zähle die Ergebnisse dann zusammen.'},
+  rul:{name:'Rechenregeln',icon:'🧩',color:'var(--rul)',
+    help:'Rechne in Schritten. 1. Klammern zuerst. 2. Punktrechnung (· und :) vor Strichrechnung (+ und −). 3. Sonst von links nach rechts.'}
 };
 var LEVELS={leicht:{name:'Starter',stars:'⭐'},mittel:{name:'Profi',stars:'⭐⭐'},schwer:{name:'Meister',stars:'⭐⭐⭐'}};
 var LEVEL_DESC={
   add:{leicht:'Zahlen bis 1000',mittel:'Zahlen bis 10 000',schwer:'drei Zahlen, bis 1 Million'},
   sub:{leicht:'Zahlen bis 1000',mittel:'Zahlen bis 10 000',schwer:'Zahlen bis 1 Million'},
   mul:{leicht:'zweistellig · einstellig',mittel:'dreistellig · einstellig',schwer:'zweistellig · zweistellig'},
-  div:{leicht:'ohne Rest, kleine Zahlen',mittel:'ohne Rest, größere Zahlen',schwer:'mit Rest'}
+  div:{leicht:'ohne Rest, kleine Zahlen',mittel:'ohne Rest, größere Zahlen',schwer:'mit Rest'},
+  rul:{leicht:'3 Zahlen: Punkt vor Strich',mittel:'3 Zahlen mit Klammern',schwer:'4 Zahlen: Klammern und Punkt vor Strich'}
 };
 var BASE={leicht:10,mittel:15,schwer:20};
 var PLACES=['Einer','Zehner','Hunderter','Tausender','Zehntausender','Hunderttausender','Millionen'];
@@ -176,7 +188,7 @@ var BADGES=[
   {id:'streak10',icon:'⚡',name:'Blitzserie',desc:'10 in Folge gleich richtig.',test:function(p){return p.bestStreak>=10;}},
   {id:'p100',icon:'💯',name:'Hundert Punkte',desc:'100 Punkte gesammelt.',test:function(p){return p.points>=100;}},
   {id:'p500',icon:'🏆',name:'Punktejäger',desc:'500 Punkte gesammelt.',test:function(p){return p.points>=500;}},
-  {id:'all4',icon:'🎯',name:'Alleskönner',desc:'Jede Rechenart schon geübt.',test:function(p){return p.modes.add>0&&p.modes.sub>0&&p.modes.mul>0&&p.modes.div>0;}},
+  {id:'all4',icon:'🎯',name:'Alleskönner',desc:'Jede Übungsart schon geübt.',test:function(p){return p.modes.add>0&&p.modes.sub>0&&p.modes.mul>0&&p.modes.div>0&&p.modes.rul>0;}},
   {id:'hard10',icon:'👑',name:'Meister-Rechner',desc:'10 schwere Aufgaben gelöst.',test:function(p){return p.hard>=10;}}
 ];
 
@@ -200,7 +212,7 @@ function prof(id){
   var base={points:0,solved:0,streak:0,bestStreak:0,hard:0,rounds:0,modes:{},badges:[]};
   var p=DB.profiles[id]||{};
   for(var k in base){if(p[k]===undefined)p[k]=base[k];}
-  ['add','sub','mul','div'].forEach(function(m){if(!p.modes[m])p.modes[m]=0;});
+  ['add','sub','mul','div','rul'].forEach(function(m){if(!p.modes[m])p.modes[m]=0;});
   DB.profiles[id]=p;
   return p;
 }
@@ -328,7 +340,7 @@ function genDiv(level){
   return {mode:'div',level:level,kind:'steps',title:fmt(dividend)+' : '+d,
     decomp:fmt(dividend)+' = '+steps.map(function(s){return fmt(s.part);}).join(' + '),steps:steps,final:fin};
 }
-var GEN={add:genAdd,sub:genSub,mul:genMul,div:genDiv};
+var GEN={add:genAdd,sub:genSub,mul:genMul,div:genDiv,rul:genRul};
 
 function expectMap(t){
   var m={};
@@ -337,9 +349,210 @@ function expectMap(t){
   return m;
 }
 
+/* ================= Rechenregeln ================= */
+function isP(o){return o==='·'||o===':';}
+function innerScopes(tk){
+  var scopes=[],stack=[];
+  tk.forEach(function(x,i){
+    if(x.t==='(')stack.push(i);
+    else if(x.t===')'){
+      var o=stack.pop();
+      var nested=tk.slice(o+1,i).some(function(y){return y.t==='('||y.t===')';});
+      if(!nested)scopes.push([o+1,i]);
+    }
+  });
+  return scopes;
+}
+function validOps(tk){
+  var scopes=innerScopes(tk);
+  if(!scopes.length)scopes=[[0,tk.length]];
+  var out=[];
+  scopes.forEach(function(sc){
+    var ops=[];
+    for(var i=sc[0];i<sc[1];i++)if(tk[i].t==='o')ops.push(i);
+    if(!ops.length)return;
+    var pt=ops.filter(function(i){return isP(tk[i].v);});
+    if(pt.length){
+      pt.forEach(function(i){
+        var prev=i-2;
+        if(prev>=sc[0]&&tk[prev].t==='o'&&isP(tk[prev].v))return;
+        out.push(i);
+      });
+    }else out.push(ops[0]);
+  });
+  return out;
+}
+function applyOp(tk,i){
+  var a=tk[i-1].v,o=tk[i].v,b=tk[i+1].v;
+  var r=o==='+'?a+b:o==='−'?a-b:o==='·'?a*b:a/b;
+  var nt=tk.slice(0,i-1).concat([{t:'n',v:r}],tk.slice(i+2));
+  for(var k=0;k<nt.length-2;k++){
+    if(nt[k].t==='('&&nt[k+1].t==='n'&&nt[k+2].t===')'){nt.splice(k+2,1);nt.splice(k,1);k--;}
+  }
+  return {tokens:nt,result:r,a:a,o:o,b:b};
+}
+function evalFirst(tk){
+  var guard=0;
+  while(tk.length>1&&guard++<30){
+    var v=validOps(tk);if(!v.length)return null;
+    tk=applyOp(tk,v[0]).tokens;
+  }
+  return tk[0].v;
+}
+var RUL_TPL={
+  leicht:[['a + b · c',1],['a − b · c',1],['a + b : c',1],['a − b : c',1],['a · b + c',0],['a · b − c',0],['a : b + c',0],['a : b − c',0]],
+  mittel:[['( a + b ) · c',1],['( a − b ) · c',1],['a · ( b + c )',1],['a · ( b − c )',1],['( a + b ) : c',1],['a − ( b + c )',1],['a − ( b − c )',1],['a + ( b − c )',0]],
+  schwer:[['a + b · c − d',1],['a · b + c · d',1],['a · b − c · d',1],['( a + b ) · c − d',1],['( a − b ) · c + d',1],['a + ( b − c ) · d',1],['( a + b ) : c + d',1],['a − b · c + d',1]]
+};
+function buildTokens(parts,vals){
+  return parts.map(function(x){
+    if(x==='('||x===')')return {t:x};
+    if(/^[a-d]$/.test(x))return {t:'n',v:vals[x]};
+    return {t:'o',v:x};
+  });
+}
+function naiveValue(tk,hasBr){
+  if(hasBr)return evalFirst(tk.filter(function(x){return x.t!=='('&&x.t!==')';}));
+  var v=tk[0].v;
+  for(var i=1;i<tk.length;i+=2){
+    var o=tk[i].v,b=tk[i+1].v;
+    v=o==='+'?v+b:o==='−'?v-b:o==='·'?v*b:v/b;
+  }
+  return v;
+}
+function tokensText(tk){return tk.map(function(x){return x.t==='n'?x.v:(x.t==='o'?x.v:x.t);}).join(' ');}
+function genRul(level){
+  var list=RUL_TPL[level],cap={leicht:120,mittel:150,schwer:200}[level];
+  for(var t=0;t<4000;t++){
+    var tp=pick(list),parts=tp[0].split(' '),hasBr=parts.indexOf('(')>=0,vals={};
+    parts.forEach(function(L,i){
+      if(!/^[a-d]$/.test(L))return;
+      var nearP=isP(parts[i-1])||isP(parts[i+1]);
+      vals[L]=nearP?rnd(2,9):(hasBr?rnd(2,12):(level==='leicht'?rnd(2,20):rnd(2,15)));
+    });
+    for(var i=1;i<parts.length-1;i++){
+      if(parts[i]===':'&&/^[a-d]$/.test(parts[i-1])&&/^[a-d]$/.test(parts[i+1])){
+        vals[parts[i+1]]=rnd(2,5);vals[parts[i-1]]=vals[parts[i+1]]*rnd(2,9);
+      }
+    }
+    var tk=buildTokens(parts,vals),cur=tk,ok=true,guard=0;
+    while(cur.length>1&&guard++<30){
+      var v=validOps(cur);
+      if(!v.length){ok=false;break;}
+      var st=applyOp(cur,v[0]);
+      if(!(st.result>=0&&st.result<=999&&Math.floor(st.result)===st.result)){ok=false;break;}
+      cur=st.tokens;
+    }
+    if(!ok||cur[0].v>cap)continue;
+    if(tp[1]&&naiveValue(tk,hasBr)===cur[0].v)continue;
+    return {mode:'rul',level:level,kind:'rules',tokens:tk,answer:cur[0].v,title:tokensText(tk)};
+  }
+  var fb=buildTokens('a + b · c'.split(' '),{a:2,b:3,c:4});
+  return {mode:'rul',level:level,kind:'rules',tokens:fb,answer:14,title:tokensText(fb)};
+}
+
+function exprHTML(tk,clickable,sel){
+  return tk.map(function(x,i){
+    var hl=(sel!==null&&sel!==undefined&&i>=sel-1&&i<=sel+1)?' selt':'';
+    if(x.t==='n')return '<span class="tn'+hl+'">'+x.v+'</span>';
+    if(x.t==='o'){
+      if(clickable)return '<button class="top" data-action="rule-op" data-i="'+i+'" aria-label="Rechenzeichen '+x.v+'">'+x.v+'</button>';
+      return '<span class="to'+hl+'">'+x.v+'</span>';
+    }
+    return '<span class="tb">'+x.t+'</span>';
+  }).join('');
+}
+function renderRules(){
+  var box=document.getElementById('rules');if(!box)return;
+  var h='';
+  R.lines.forEach(function(l){
+    h+='<div class="rline old">'+exprHTML(l.tk,false,l.sel)+'<span class="rnote'+(l.rev?' rev':'')+'">'+l.text+'</span></div>';
+  });
+  if(R.phase==='done'){
+    h+='<div class="rline">Ergebnis: <span class="tn selt">'+R.tk[0].v+'</span></div>';
+  }else{
+    h+='<div class="rline">'+exprHTML(R.tk,R.phase==='choose',R.phase==='calc'?R.sel:null)+'</div>';
+    if(R.phase==='choose'){
+      h+='<p class="muted">Tippe auf das Rechenzeichen, das du <strong>zuerst</strong> rechnen musst.</p>';
+    }else{
+      var a=R.tk[R.sel-1].v,o=R.tk[R.sel].v,b=R.tk[R.sel+1].v;
+      h+='<div class="eq"><span>'+a+' '+o+' '+b+' =</span><input class="box rin" inputmode="numeric" autocomplete="off" maxlength="4" style="width:calc(3.4ch + 22px)" aria-label="Ergebnis"></div>';
+    }
+  }
+  box.innerHTML=h;
+  var pb=document.getElementById('primary');
+  if(pb&&!S.done)pb.disabled=(R.phase!=='calc');
+  if(R.phase==='calc'){
+    var inp=box.querySelector('.rin');
+    if(inp)setTimeout(function(){inp.focus();},30);
+  }
+}
+function initRules(t){
+  R={tk:t.tokens.slice(),lines:[],phase:'choose',sel:null,chooseTries:0,calcTries:0,helped:0};
+  renderRules();
+}
+function ruleWhy(tk,i){
+  var scopes=innerScopes(tk);
+  if(scopes.length){
+    var inside=scopes.some(function(sc){return i>=sc[0]&&i<sc[1];});
+    if(!inside)return 'Achtung, Klammer! Was in der Klammer steht, rechnest du zuerst.';
+  }
+  var sc=scopes.filter(function(x){return i>=x[0]&&i<x[1];})[0]||[0,tk.length];
+  var hasP=false;
+  for(var k=sc[0];k<sc[1];k++)if(tk[k].t==='o'&&isP(tk[k].v))hasP=true;
+  if(hasP&&!isP(tk[i].v))return 'Punkt vor Strich! Zuerst kommen · und :, erst danach + und −.';
+  return 'Rechne von links nach rechts.';
+}
+function ruleChoose(i){
+  if(S.done||!R||R.phase!=='choose')return;
+  var valid=validOps(R.tk);
+  if(valid.indexOf(i)>=0){R.sel=i;R.phase='calc';R.calcTries=0;setFb('','');renderRules();return;}
+  S.attempts++;R.chooseTries++;
+  var why=ruleWhy(R.tk,i);
+  if(R.chooseTries>=2){
+    R.helped++;R.sel=valid[0];R.phase='calc';R.calcTries=0;R.chooseTries=0;
+    setFb(why+' Die richtige Rechnung ist jetzt markiert.','warn');
+    renderRules();
+  }else setFb(why+' Versuche es noch einmal.','bad');
+}
+function ruleAdvance(st,revealed){
+  R.lines.push({tk:R.tk,sel:R.sel,rev:revealed,text:'→ '+st.a+' '+st.o+' '+st.b+' = '+st.result});
+  R.tk=st.tokens;R.sel=null;
+  if(R.tk.length===1){R.phase='done';renderRules();finish(R.helped===0);return;}
+  R.phase='choose';R.chooseTries=0;R.calcTries=0;
+  setFb(revealed?'Das richtige Ergebnis ist '+st.result+'. Weiter geht es!':'Richtig! Weiter so.',revealed?'warn':'good');
+  renderRules();
+}
+function checkRule(){
+  if(!R||R.phase!=='calc')return;
+  var inp=app.querySelector('.rin');
+  if(!inp||inp.value.trim()===''){setFb('Schreibe zuerst dein Ergebnis hin.','warn');return;}
+  var st=applyOp(R.tk,R.sel);
+  if(Number(inp.value)===st.result){ruleAdvance(st,false);return;}
+  S.attempts++;R.calcTries++;
+  if(R.calcTries>=2){R.helped++;ruleAdvance(st,true);return;}
+  inp.classList.add('bad');
+  setFb('Das stimmt noch nicht. Rechne noch einmal: '+st.a+' '+st.o+' '+st.b,'bad');
+  try{inp.select();}catch(e){}
+}
+function ruleHint(){
+  var tk=R.tk;
+  if(R.phase==='calc'){
+    var a=tk[R.sel-1].v,o=tk[R.sel].v,b=tk[R.sel+1].v;
+    if(o==='·')return 'Kleines Einmaleins: '+a+' · '+b+'.';
+    if(o===':')return 'Überlege: Welche Zahl mal '+b+' ergibt '+a+'?';
+    if(o==='+')return 'Zähle zusammen: '+a+' + '+b+'.';
+    return 'Gehe von '+a+' um '+b+' zurück.';
+  }
+  if(tk.some(function(x){return x.t==='(';}))return 'Hier gibt es eine Klammer. Was in der Klammer steht, rechnest du zuerst.';
+  if(tk.some(function(x){return x.t==='o'&&isP(x.v);}))return 'Hier gibt es · oder : . Die rechnest du vor + und −. Das ist Punkt vor Strich.';
+  return 'Hier gibt es nur + und −. Rechne von links nach rechts.';
+}
+
 /* ================= Zustand ================= */
 var S={avatar:null,mode:null,level:null,idx:0,total:5,task:null,attempts:0,hintUsed:false,
   done:false,results:[],roundPoints:0,used:{}};
+var R=null;
 
 /* ================= Anzeige: Startseite ================= */
 function renderProfiles(){
@@ -372,7 +585,7 @@ function renderMenu(){
   var h='<div class="topbar"><button class="btn sec small" data-action="home">← Tier wechseln</button></div>'+
     '<div id="hud">'+hudHTML()+'</div>'+
     '<section class="card"><h2>Was möchtest du üben?</h2><div class="modes">'+
-    ['add','sub','mul','div'].map(function(m){
+    ['add','sub','mul','div','rul'].map(function(m){
       var M=MODES[m];
       return '<button class="mode" style="--mc:'+M.color+'" data-action="pick-mode" data-mode="'+m+'">'+
         '<span class="ic">'+M.icon+'</span><span><strong>'+M.name+'</strong><small>'+p.modes[m]+' richtig gelöst</small></span></button>';
@@ -451,11 +664,12 @@ function renderTask(){
     '<section class="card task" style="--mc:'+M.color+'">'+
     '<span class="tag">'+M.icon+' '+M.name+' · '+LEVELS[t.level].stars+'</span>'+
     '<p class="muted help">'+M.help+'</p>'+
-    '<div class="work">'+(t.kind==='column'?columnHTML(t):stepsHTML(t))+'</div>'+
+    '<div class="work">'+(t.kind==='rules'?'<div id="rules" class="rules"></div>':(t.kind==='column'?columnHTML(t):stepsHTML(t)))+'</div>'+
     '<div id="hint" class="hint" hidden></div><div id="fb" class="fb" role="status" aria-live="polite"></div>'+
     '<div class="actions"><button class="btn sec" id="hintbtn" data-action="hint">💡 Tipp</button>'+
     '<button class="btn" id="primary" data-action="check">Prüfen ✓</button></div>'+
     '<p class="small muted center">Aufgabe '+(S.idx+1)+' von '+S.total+' · Mit Tipp oder zweitem Versuch gibt es nur halbe Punkte.</p></section>';
+  if(t.kind==='rules'){initRules(t);return;}
   var first=t.kind==='column'?app.querySelector('.res[data-p="'+(t.n-1)+'"]'):app.querySelector('.ans');
   if(first)setTimeout(function(){first.focus();},40);
 }
@@ -503,6 +717,7 @@ function reveal(t){
 
 /* ================= Tipp ================= */
 function hintText(t){
+  if(t.kind==='rules')return ruleHint();
   if(t.kind==='column'){
     var els=[].slice.call(app.querySelectorAll('.res'));
     for(var k=0;k<t.n;k++){
@@ -565,13 +780,13 @@ function finish(correct){
   }else if(state==='second'){
     setFb('Geschafft! +'+pts+' Punkte (halbe Punkte, weil du einen Tipp oder einen zweiten Versuch gebraucht hast)','good');
   }else{
-    setFb('Das war knifflig – nicht schlimm! Die richtige Lösung siehst du in Gelb. Beim nächsten Mal klappt es!','warn');
+    setFb(t.kind==='rules'?'Das war knifflig – nicht schlimm! Merke dir: Klammer zuerst, dann Punkt vor Strich, sonst von links nach rechts.':'Das war knifflig – nicht schlimm! Die richtige Lösung siehst du in Gelb. Beim nächsten Mal klappt es!','warn');
   }
   document.getElementById('hud').innerHTML=hudHTML();
   document.getElementById('dots').innerHTML=dotsHTML();
   document.getElementById('hintbtn').disabled=true;
   var pb=document.getElementById('primary');
-  pb.dataset.action='next';pb.textContent=(S.idx+1<S.total)?'Weiter ➜':'Fertig 🎉';
+  pb.disabled=false;pb.dataset.action='next';pb.textContent=(S.idx+1<S.total)?'Weiter ➜':'Fertig 🎉';
   setTimeout(function(){pb.focus();},30);
 
   var after=levelInfo(p.points);
@@ -580,7 +795,9 @@ function finish(correct){
 }
 function onCheck(){
   if(S.done)return;
-  var t=S.task,r=t.kind==='column'?checkColumn(t):checkSteps(t);
+  var t=S.task;
+  if(t.kind==='rules'){checkRule();return;}
+  var r=t.kind==='column'?checkColumn(t):checkSteps(t);
   if(r.incomplete){setFb(r.msg,'warn');return;}
   if(r.ok){finish(true);return;}
   S.attempts++;
@@ -644,6 +861,7 @@ app.addEventListener('click',function(e){
   else if(a==='check')onCheck();
   else if(a==='hint')onHint();
   else if(a==='next')next();
+  else if(a==='rule-op')ruleChoose(Number(b.dataset.i));
   else if(a==='quit'){if(window.confirm('Runde wirklich beenden?'))renderMenu();}
   else if(a==='new-lesson'){
     if(window.confirm('Neue Stunde starten? Alle Punkte, Level und Abzeichen auf diesem iPad werden auf null gesetzt.')){newLesson();renderProfiles();}
